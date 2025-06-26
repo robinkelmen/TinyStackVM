@@ -91,7 +91,11 @@ void eval(int instr){
 
 	case MOD:{ BINARY_OP(%); break;}
 
-	case JMP:{ ip = program[++ip]; return;}
+	case JMP:{ 
+		ip++;
+		ip = program[ip];
+		 return;
+		}
 
 	case JNZ:{
 		int val = pop();
@@ -202,23 +206,14 @@ void eval(int instr){
 
 	case LOG_AND:{
 
-		int b = pop();
-		int a = pop();
-
-		push(a && b);
-
+		LOG_BITWISE_OP(&&);
 		break;
 
 	}
 
 	case LOG_OR:{
 
-		int b = pop();
-		int a = pop();
-
-		push(a || b);
-
-
+		LOG_BITWISE_OP(||);
 		break;
 
 	}
@@ -244,10 +239,7 @@ void eval(int instr){
 
 	case AND:{
 
-		int b = pop();
-		int a = pop();
-
-		push(a & b);
+		LOG_BITWISE_OP(&);
 
 		break;
 
@@ -255,10 +247,8 @@ void eval(int instr){
 
 	case OR:{
 
-		int b = pop();
-		int a = pop();
-
-		push(a | b);
+		
+		LOG_BITWISE_OP(|);
 
 
 		break;
@@ -267,12 +257,8 @@ void eval(int instr){
 
 	case XOR:{
 
-		int b= pop();
-		int a = pop();
 
-		push(a ^ b);
-
-
+		LOG_BITWISE_OP(^);
 		break;
 
 	}
@@ -283,6 +269,38 @@ void eval(int instr){
 		break;
 
 	}
+
+	case STORE: {
+
+		int offset = pop();
+		int base = pop();
+		int val = pop();
+
+		int addr = base + offset;
+
+		if (addr < 0 || addr >= MEMORY_SIZE){
+			printf("STORE: Address out of bounds \n");
+			return;
+		}
+		memory[addr] = val;
+	}
+
+	case LOAD: {
+		int offset = pop();
+		int base = pop();
+
+		int addr = base + offset;
+
+		if (addr < 0 || addr >= MEMORY_SIZE){
+			printf("LAOD: Address out of bounds \n");
+			push(0); //think about error handling convention
+			return;
+		}
+		push(memory[addr]);
+
+	}
+
+
 	default:{
 		printf("Unknown instruction: %d\n", instr);
 		running = false;

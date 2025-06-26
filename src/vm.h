@@ -23,6 +23,15 @@
 		else{ip++;} \
 	} while(0)
 
+#define LOG_BITWISE_OP(op) \
+	do { \
+		int b= pop(); \
+		int a = pop(); \
+		push(a op b); \
+	} while(0)
+
+
+
 // External state
 extern int stack[STACK_SIZE];
 extern int sp;
@@ -71,6 +80,11 @@ typedef enum{
 	LOG_OR, 
 	LOG_NOT,
 	LOG_XOR,
+
+	STORE, 
+	LOAD, 
+	ALLOC, 
+	FREE,
 	
 
 
