@@ -1,6 +1,7 @@
 
 #include <stdbool.h> 
 #include <stdio.h>
+#include <stdlib.h>
 #include "vm.h"
 
 
@@ -16,6 +17,21 @@ int memory[MEMORY_SIZE];
 bool running = true;
 int registers[NUM_OF_REGISTERS];
 const int* program;
+
+
+Block* head = NULL;
+
+void init_memory() {
+  head = malloc(sizeof(Block));
+  if (head) {
+    head->start = 0;
+    head->size = MEMORY_SIZE;
+    head->used = false;
+    head->next = NULL;
+  } else {
+    printf("Failed to init memory\n");
+  }
+}
 
 int pop() {
 
@@ -59,6 +75,8 @@ bool get_memory(int index, int* out_val) {
 	*out_val = memory[index];
 	return true;
 }
+
+
 
 
 
@@ -156,7 +174,8 @@ void eval(int instr){
 	}
 
 	case LOG: {
-		int val = stack[sp--];
+		printf("SP: %d \n", sp);
+		int val = pop();
 		printf("LOG: %d\n", val);
 		break;
 	}
@@ -268,6 +287,81 @@ void eval(int instr){
 
 		break;
 
+	}
+
+	case SHL:{
+		SHIFT_BITS(<<);
+		break;
+	}
+
+	case SHR:{
+		SHIFT_BITS(>>);
+		break;
+
+	}
+
+	//look up free/unused blocks
+	// flit the block into size and BlockSize - size
+	// add new node of allocated memory
+	//push base to stack if found
+	case ALLOC:{
+		int size = pop();
+		int base = -1;
+		Block* current = head;
+
+
+		while(current != NULL){
+
+			if(!current->used && current->size >= size){
+				
+				if(current->size == size){
+					current->used = true;
+					base = current->start;
+					break;
+				}else{
+
+						Block* leftover = malloc(sizeof(Block));
+						if (!leftover){
+							printf("ALLOC: Failed to allocate leftover block");
+							return;
+						}
+						leftover->start = current->start + size;
+						leftover->size = current->size - size;
+						leftover->used = false;
+						leftover->next = current->next;
+
+						current->size = size;
+						current->used = true;
+						current->next = leftover;
+
+						base = current->start;
+						break;
+
+						
+				}
+			}
+
+			current = current->next;
+		}
+	
+
+		
+
+
+		if (base == -1){
+			printf("ALLOC: No free space \n");
+		}
+
+		push(base);
+
+		current = head;
+printf("---- Current Blocks ----\n");
+while (current) {
+    printf("[start: %d, size: %d, used: %s]\n",
+           current->start, current->size, current->used ? "true" : "false");
+    current = current->next;
+}
+printf("------------------------\n");
 	}
 
 	case STORE: {

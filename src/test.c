@@ -16,12 +16,14 @@
 
 void run_test(const char* name, const int* prog, int len) {
 	printf("=== Running %s ===\n", name);
+	init_memory();
 	run_vm(prog, len);
 	//ASSERT_TOP(expected);
 	printf("\n");
 }
 
 int main() {
+
 	const int test_jmp[] = {
 		PSH, 1,
 		JMP, 6,
@@ -180,6 +182,35 @@ const int test_not[] = {
     HLT
 };
 
+const int test_alloc_basic[] = {
+    PSH, 100,    // Push size 100
+    ALLOC,       // Allocate 100 bytes → pushes base
+    LOG,         // Should log 0 (first base should be 0)
+    HLT
+};
+
+const int test_alloc_twice[] = {
+    PSH, 100,    // First alloc
+    ALLOC,
+    LOG,         // Should log 0
+
+    PSH, 200,    // Second alloc
+    ALLOC,
+    LOG,         // Should log 100 (next block starts at 100)
+    HLT
+};
+
+const int test_alloc_fail[] = {
+    PSH, 1024,
+    ALLOC,
+    LOG,    // Should log 0 (alloc whole memory)
+
+    PSH, 1,
+    ALLOC,
+    LOG,    // Should log -1 (fail — no space left)
+    HLT
+};
+
 
 	run_test("TEST JMP", test_jmp, sizeof(test_jmp)/sizeof(int));
 	run_test("TEST JNZ", test_jnz, sizeof(test_jnz)/sizeof(int));
@@ -198,6 +229,10 @@ run_test("TEST AND", test_and, sizeof(test_and)/sizeof(int));
 run_test("TEST OR", test_or, sizeof(test_or)/sizeof(int));
 run_test("TEST XOR", test_xor, sizeof(test_xor)/sizeof(int));
 run_test("TEST NOT", test_not, sizeof(test_not)/sizeof(int));
+run_test("TEST ALLOC BASIC", test_alloc_basic, sizeof(test_alloc_basic)/sizeof(int));
+run_test("TEST ALLOC TWICE", test_alloc_twice, sizeof(test_alloc_twice)/sizeof(int));
+run_test("TEST ALLOC FAIL", test_alloc_fail, sizeof(test_alloc_fail)/sizeof(int));
+
 
 	return 0;
 }

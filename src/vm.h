@@ -30,14 +30,15 @@
 		push(a op b); \
 	} while(0)
 
+#define SHIFT_BITS(op)\
+	do{\
+		int shift = program[ip]; \
+		int val = pop(); \
+		push(val >> shift); \
+	}while(0)
 
 
-// External state
-extern int stack[STACK_SIZE];
-extern int sp;
-extern int ip;
-extern bool running;
-extern const int* program;
+
 
 // Opcodes
 typedef enum{
@@ -75,6 +76,9 @@ typedef enum{
 	OR, 
 	NOT,
 	XOR, 
+
+	SHL, 
+	SHR,
 	
 	LOG_AND, 
 	LOG_OR, 
@@ -97,10 +101,29 @@ typedef enum{
 
 } Registers;
 
+typedef struct Block{
+	int start;
+	int size;
+	bool used;
+	struct Block* next;
+} Block;
+
+
+
+// External state
+extern int stack[STACK_SIZE];
+extern int sp;
+extern int ip;
+extern bool running;
+extern const int* program;
+
+
+
 // VM API
 void eval(int instr);
 void run_vm(const int* program, int program_len);
 int pop();
 void push(int val);
+void init_memory();
 
 #endif
