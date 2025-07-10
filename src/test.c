@@ -211,6 +211,97 @@ const int test_alloc_fail[] = {
     HLT
 };
 
+const int test_alloc_store_load_free[] = {
+    // === alloc A ===
+    PSH, 100,      // size = 100
+    ALLOC,         // alloc → base0
+    DUP,           // keep base0 for later
+    PEEK,          // peek base0 (should be 0)
+
+    // === alloc B ===
+    PSH, 200,
+    ALLOC,         // alloc → base1
+    DUP,           // keep base1
+    PEEK,          // peek base1 (should be 100)
+
+    // === store value 42 at base1 + 0 ===
+    DUP,           // keep base1
+    PSH, 0,        // offset
+    PSH, 42,       // value
+    STORE,         // memory[base1 + 0] = 42
+
+    // === load it back ===
+    DUP,           // keep base1
+    PSH, 0,
+    LOAD,
+    PEEK,          // should be 42
+
+    // === free B ===
+    POP,           // pop loaded value (tidy)
+    FREE,          // free base1
+
+    // === alloc C, should reuse freed space ===
+    PSH, 200,
+    ALLOC,         // should get base1 spot again
+    PEEK,          // should be same as old base1
+
+    // === free A ===
+    POP,           // pop baseC (tidy)
+    POP,           // pop old base1 copy (tidy)
+    FREE,          // free base0
+
+    // === alloc D (big) should merge A+B and reuse whole ===
+    PSH, 300,
+    ALLOC,
+    PEEK,          // should be base0 if merge works
+
+    HLT
+};
+
+const int test_alloc_store_load_free_merge[] = {
+    // alloc A (100)
+    PSH, 100,
+    ALLOC,
+    DUP,
+
+    // alloc B (200)
+    PSH, 200,
+    ALLOC,
+    DUP,
+
+    // store at B
+    DUP,
+    PSH, 0,
+    PSH, 42,
+    STORE,
+
+    // load back
+    DUP,
+    PSH, 0,
+    LOAD,
+    PEEK,
+
+    // clean stack
+    POP,
+
+    // free B
+    FREE,
+
+    // free A
+    FREE,
+
+    // now alloc 300 — should merge A+B
+    PSH, 300,
+    ALLOC,
+    PEEK,
+
+    HLT
+};
+
+
+
+
+
 
 	run_test("TEST JMP", test_jmp, sizeof(test_jmp)/sizeof(int));
 	run_test("TEST JNZ", test_jnz, sizeof(test_jnz)/sizeof(int));
@@ -232,6 +323,11 @@ run_test("TEST NOT", test_not, sizeof(test_not)/sizeof(int));
 run_test("TEST ALLOC BASIC", test_alloc_basic, sizeof(test_alloc_basic)/sizeof(int));
 run_test("TEST ALLOC TWICE", test_alloc_twice, sizeof(test_alloc_twice)/sizeof(int));
 run_test("TEST ALLOC FAIL", test_alloc_fail, sizeof(test_alloc_fail)/sizeof(int));
+run_test("TEST_ALLOC_STORE_LOAD_FREE", test_alloc_store_load_free, sizeof(test_alloc_store_load_free)/sizeof(int));
+run_test("TEST_ALLOC_STORE_LOAD_FREE_MERGE", test_alloc_store_load_free_merge, sizeof(test_alloc_store_load_free_merge)/sizeof(int));
+
+
+
 
 
 	return 0;

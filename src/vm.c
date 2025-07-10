@@ -52,7 +52,7 @@ void push(int val) {
 		return;
 	}
 	stack[++sp] = val;
-	printf("pushed val %d and current sp: %d\n", val, sp);
+	//printf("pushed val %d and current sp: %d\n", val, sp);
 }
 
 bool push_memory(int index, int val) {
@@ -73,9 +73,19 @@ bool get_memory(int index, int* out_val) {
 		return false; // or some sentinel value
 	}
 
-	printf("get mem: val: %d \n", memory[index]);
+	//printf("get mem: val: %d \n", memory[index]);
 	*out_val = memory[index];
 	return true;
+}
+
+void print_blocks() {
+    Block* current = head;
+    printf("=== Blocks ===\n");
+    while (current) {
+        printf("[start=%d size=%d used=%d] -> \n", current->start, current->size, current->used);
+        current = current->next;
+    }
+    printf("NULL\n");
 }
 
 
@@ -95,7 +105,7 @@ int fetch(){
 void eval(int instr){
 	switch (instr){
 
-	case HLT:running = false; break;
+	case HLT: {running = false; print_blocks(); break;}
 
 	case PSH: { push(program[++ip]); break;}
 
@@ -110,6 +120,19 @@ void eval(int instr){
 	case MUL:{ BINARY_OP(*); break; }
 
 	case MOD:{ BINARY_OP(%); break;}
+
+	case SWAP: {
+
+		if (sp < 1){
+			printf("SWAP: Not enough elements on stack. \n");
+			return;
+		}
+
+		int tmp = stack[sp -1];
+		stack[sp -1] = stack[sp];
+		stack[sp] = tmp;
+		break;
+	}
 
 	case JMP:{ 
 		ip++;
@@ -176,7 +199,7 @@ void eval(int instr){
 	}
 
 	case LOG: {
-		printf("SP: %d \n", sp);
+		//printf("SP: %d \n", sp);
 		int val = pop();
 		printf("LOG: %d\n", val);
 		break;
@@ -307,6 +330,12 @@ void eval(int instr){
 		int base = -1;
 		Block* current = head;
 
+		if (size <= 0) {
+		  printf("ALLOC: Invalid size %d\n", size);
+		  push(-1);
+		  return;
+		}	
+
 
 		while(current != NULL){
 
@@ -323,7 +352,7 @@ void eval(int instr){
 							printf("ALLOC: Failed to allocate leftover block");
 							return;
 						}
-						leftover->start = current->start + size+1; // What if start is 0?
+						leftover->start = current->start + size; // What if start is 0?
 						leftover->size = current->size - size;
 						leftover->used = false;
 						leftover->next = current->next;
@@ -352,27 +381,71 @@ void eval(int instr){
 
 		push(base);
 
-		current = head;
-			printf("---- Current Blocks ----\n");
-			while (current) {
-			    printf("[start: %d, size: %d, used: %s]\n",
-			           current->start, current->size, current->used ? "true" : "false");
-			    current = current->next;
-			}
-			printf("------------------------\n");
-	break;
+		print_blocks();
+		break;
 	}
 
 	case FREE:{
 
-		
+		int base = pop();
+		Block* current = head;
+
+		while(current && current->start != base){
+
+			current = current->next;
+		}
+
+		if(!current){
+			printf("FREE: Invalid base address \n");
+			return;
+		}
+		if(!current->used){
+			printf("FREE: Block already free \n");
+			return;
+		}
+
+		current->used = false;
+
+
+		//merge next free block if available
+
+
+		if(current->next && !current->next->used){
+			Block* next = current->next;
+			current->size = current->size + next->size;
+			current->next = next->next;
+			free(next);
+
+
+		}
+
+		Block* prev = NULL;
+		Block* tmp = head;
+
+		while (tmp && tmp != current){
+
+			prev = tmp;
+			tmp = tmp->next;
+		}
+
+		if (prev && !prev->used){
+			prev->size += current->size;
+			prev->next = current->next;
+			free(current);
+
+		}
+
+
+		break;
 	}
 
 	case STORE: {
 
+
+		int val = pop();
 		int offset = pop();
 		int base = pop();
-		int val = pop();
+		
 
 		int addr = base + offset;
 
@@ -383,6 +456,7 @@ void eval(int instr){
 		//memory[addr] = val;
 
 		push_memory(addr,val);
+		break;
 	}
 
 	case LOAD: {
@@ -397,6 +471,7 @@ void eval(int instr){
 			return;
 		}
 		push(memory[addr]);
+		break;
 
 	}
 

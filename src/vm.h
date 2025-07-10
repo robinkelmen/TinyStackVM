@@ -45,6 +45,7 @@ typedef enum{
 	PSH,
 	POP,
 	MOV,
+	SWAP,
 	HLT,
 
 	JMP,
