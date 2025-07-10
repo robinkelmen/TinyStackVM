@@ -40,28 +40,30 @@ int pop() {
 		running = false;
 		return 0;
 	}
+
 	return stack[sp--];
 }
 
 void push(int val) {
-	printf("pushed val %d and current sp: %d\n", val, sp);
+	
 	if (sp >= STACK_SIZE - 1) {
 		printf("Stack overflow!\n");
 		running = false;
 		return;
 	}
 	stack[++sp] = val;
+	printf("pushed val %d and current sp: %d\n", val, sp);
 }
 
-void push_memory(int index, int val) {
+bool push_memory(int index, int val) {
 	if (index < 0 || index >= MEMORY_SIZE) {
 		printf("SET: Invalid memory index %d\n", index);
-		return;
+		return false;
 	}
 
-	printf("psuh before mem: val: %d \n", memory[index]);
 	memory[index] = val;
-	printf("psuh after mem: val: %d \n", memory[index]);
+
+	return true;
 }
 
 
@@ -300,10 +302,6 @@ void eval(int instr){
 
 	}
 
-	//look up free/unused blocks
-	// flit the block into size and BlockSize - size
-	// add new node of allocated memory
-	//push base to stack if found
 	case ALLOC:{
 		int size = pop();
 		int base = -1;
@@ -325,7 +323,7 @@ void eval(int instr){
 							printf("ALLOC: Failed to allocate leftover block");
 							return;
 						}
-						leftover->start = current->start + size;
+						leftover->start = current->start + size+1; // What if start is 0?
 						leftover->size = current->size - size;
 						leftover->used = false;
 						leftover->next = current->next;
@@ -355,13 +353,19 @@ void eval(int instr){
 		push(base);
 
 		current = head;
-printf("---- Current Blocks ----\n");
-while (current) {
-    printf("[start: %d, size: %d, used: %s]\n",
-           current->start, current->size, current->used ? "true" : "false");
-    current = current->next;
-}
-printf("------------------------\n");
+			printf("---- Current Blocks ----\n");
+			while (current) {
+			    printf("[start: %d, size: %d, used: %s]\n",
+			           current->start, current->size, current->used ? "true" : "false");
+			    current = current->next;
+			}
+			printf("------------------------\n");
+	break;
+	}
+
+	case FREE:{
+
+		
 	}
 
 	case STORE: {
@@ -376,7 +380,9 @@ printf("------------------------\n");
 			printf("STORE: Address out of bounds \n");
 			return;
 		}
-		memory[addr] = val;
+		//memory[addr] = val;
+
+		push_memory(addr,val);
 	}
 
 	case LOAD: {
