@@ -2,6 +2,7 @@
 #define VM_H
 
 #include <stdbool.h>
+#include "error.h"
 
 #define STACK_SIZE 256
 #define MEMORY_SIZE 1024
@@ -117,6 +118,7 @@ extern int sp;
 extern int ip;
 extern bool running;
 extern const int* program;
+extern VMError last_error;
 
 
 

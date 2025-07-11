@@ -7,7 +7,7 @@ SRC_DIR = src
 BUILD_DIR = build
 
 
-SRC_FILES = $(SRC_DIR)/vm.c 
+SRC_FILES = $(SRC_DIR)/vm.c $(SRC_DIR)/error.c 
 TEST_FILES = $(SRC_DIR)/test.c
 
 
