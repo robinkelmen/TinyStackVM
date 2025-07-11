@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "vm.h"
-#include "error.h"   // ✅ ADD THIS
+#include "error.h"   
 
 int ip = 0;
 int sp = -1;
@@ -10,7 +10,7 @@ int sp = -1;
 int stack[STACK_SIZE];
 int memory[MEMORY_SIZE];
 bool running = true;
-//VMError last_error = ERR_NONE;  // ✅ Track last error
+
 
 const int* program;
 

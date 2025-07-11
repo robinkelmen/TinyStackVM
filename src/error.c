@@ -4,7 +4,7 @@
 
 #include "error.h"
 
-// You’ll include this variable in your main VM file
+
 extern bool running;
 VMError last_error = ERR_NONE;
 
